@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Communication Coach</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Live Voice Practice</p>
+        <h1>AI Communication Coach</h1>
+        <p id="userWelcome" class="landing-status small">Welcome</p>
+      </div>
+      <div class="topbar-actions">
+        <span class="pill" id="statusPill">Idle</span>
+        <button class="ghost" id="profileBtn">Profile</button>
+        <button class="ghost" id="logoutBtn">Logout</button>
+      </div>
+    </header>
+
+    <section class="mode-card">
+      <p class="section-title">Roleplay Mode</p>
+      <div class="mode-grid" id="modeGrid">
+        <button class="mode-btn active" data-mode="Interview">Interview Mode</button>
+        <button class="mode-btn" data-mode="Casual">Casual Mode</button>
+        <button class="mode-btn" data-mode="Professional">Professional Mode</button>
+        <button class="mode-btn" data-mode="Dating">Dating Mode</button>
+      </div>
+    </section>
+
+    <section class="conversation-card">
+      <p class="section-title">Voice Conversation</p>
+
+      <div class="setup-box">
+        <p class="label">Custom Conversation Type</p>
+        <div class="setup-grid single">
+          <input id="customConversationType" type="text" placeholder="Example: Client negotiation, salary discussion, team standup update..." />
+        </div>
+      </div>
+
+      <div id="interviewSetup" class="setup-box">
+        <p class="label">Interview Setup</p>
+        <div class="setup-grid">
+          <input id="interviewRole" type="text" placeholder="Role (e.g., Frontend Developer)" />
+          <input id="interviewCompany" type="text" placeholder="Company (e.g., TCS, Google)" />
+          <button class="ghost" id="setInterviewBtn">Set Interview Context</button>
+        </div>
+        <textarea id="interviewJD" rows="4" placeholder="Optional: Paste Job Description (JD) for JD-based interview questions..."></textarea>
+      </div>
+
+      <div class="controls">
+        <button class="primary" id="startBtn">Start Listening</button>
+        <button class="secondary" id="stopBtn" disabled>Stop Session</button>
+        <select id="micMode" class="speech-select" aria-label="Microphone interaction mode">
+          <option value="hold" selected>Mic: Hold</option>
+          <option value="tap">Mic: Tap</option>
+        </select>
+        <select id="speechLang" class="speech-select" aria-label="Speech recognition language">
+          <option value="en-IN" selected>English (India)</option>
+          <option value="en-US">English (US)</option>
+          <option value="en-GB">English (UK)</option>
+        </select>
+      </div>
+      <p class="hint">Set custom scenario and optional JD, then choose mic mode and submit answers turn by turn.</p>
+
+      <div class="chat-box">
+        <p class="label">Conversation Log</p>
+        <div id="conversationLog" class="conversation-log"></div>
+      </div>
+
+      <div class="live-box">
+        <p class="label">Your Speech (Live Transcript)</p>
+        <p id="liveTranscript" class="transcript">Waiting for input...</p>
+      </div>
+
+      <div class="answer-box">
+        <p class="label">Your Final Answer</p>
+        <textarea id="answerInput" rows="3" placeholder="Type or speak your answer here..."></textarea>
+        <div class="answer-actions">
+          <button class="primary" id="submitAnswerBtn">Submit Answer</button>
+          <button class="ghost" id="clearAnswerBtn">Clear</button>
+          <button class="ghost" id="refineTranscriptBtn">Refine Transcript</button>
+        </div>
+      </div>
+
+      <div class="suggestion-box">
+        <p class="label">Answer Tips (For Current AI Question)</p>
+        <div id="suggestions" class="suggestions">
+          <button class="suggestion-chip" disabled>Answer tips will appear here</button>
+        </div>
+      </div>
+
+      <div class="reply-box">
+        <p class="label">AI Reply</p>
+        <p id="aiReply">Select a mode and start speaking to begin.</p>
+        <p id="aiSource" class="source-tag">Source: -</p>
+      </div>
+    </section>
+
+    <section class="feedback-card">
+      <div class="feedback-header">
+        <p class="section-title">Session Feedback</p>
+      </div>
+      <div class="score-grid">
+        <div class="score-item">
+          <span>Grammar</span>
+          <strong id="grammarScore">0</strong>
+        </div>
+        <div class="score-item">
+          <span>Fluency</span>
+          <strong id="fluencyScore">0</strong>
+        </div>
+        <div class="score-item">
+          <span>Confidence</span>
+          <strong id="confidenceScore">0</strong>
+        </div>
+      </div>
+      <p id="improvementTips" class="tips">Complete a session to view personalized tips.</p>
+
+      <div class="report-box">
+        <p class="label">Detailed Report</p>
+        <div id="detailedReport" class="report-content">End session to auto-generate report.</div>
+      </div>
+    </section>
+  </main>
+  <button class="primary floating-ptt" id="pttBtn" disabled>Hold To Talk</button>
+
+  <script type="module" src="./js/coach-access.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

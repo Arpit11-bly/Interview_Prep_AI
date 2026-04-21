@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Comm Coach | Live Practice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
+  <main class="landing-shell">
+    <section class="hero-card hero-strong">
+      <p class="eyebrow">AI Communication Platform</p>
+      <h1>Practice Real Conversations. Get Real Improvement.</h1>
+      <p class="hero-copy">
+        Train with live AI in interview, professional, casual, and roleplay scenarios.
+        Receive answer tips, confidence coaching, and saved performance reports.
+      </p>
+      <div class="hero-actions">
+        <a href="#authCard" class="primary landing-link">Start Free Practice</a>
+        <a href="./coach.html" class="ghost landing-link" id="existingUserBtn">Go To Dashboard</a>
+      </div>
+      <p id="landingStatus" class="landing-status"></p>
+
+      <div class="hero-stats">
+        <div class="hero-stat"><strong>4</strong><span>Practice Modes</span></div>
+        <div class="hero-stat"><strong>Live</strong><span>Voice Coaching</span></div>
+        <div class="hero-stat"><strong>Auto</strong><span>Report History</span></div>
+      </div>
+    </section>
+
+    <section class="modules-card">
+      <p class="section-title">Core Modules</p>
+      <div class="module-grid">
+        <article class="module-item">
+          <h3>Custom Conversation</h3>
+          <p>User can define exact conversation type, tone, and context before session.</p>
+        </article>
+        <article class="module-item">
+          <h3>JD-Based Interview</h3>
+          <p>Paste job description to get role-specific interview questions and answer guidance.</p>
+        </article>
+        <article class="module-item">
+          <h3>Live Answer Tips</h3>
+          <p>For each AI question, get what to include, what to avoid, and structure hints.</p>
+        </article>
+        <article class="module-item">
+          <h3>Saved Profile Reports</h3>
+          <p>Auto-save each session report with scores, conversation turns, and better answers.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="register-card" id="authCard">
+      <p class="section-title">Mobile OTP Login</p>
+      <div class="auth-tabs" id="authTabs">
+        <button class="auth-tab active" data-tab="register">Register</button>
+        <button class="auth-tab" data-tab="login">Login</button>
+      </div>
+
+      <form id="registerForm" class="register-form auth-panel active" data-panel="register">
+        <input id="regName" type="text" placeholder="Full Name" required />
+        <input id="regEmail" type="email" placeholder="Email" required />
+        <input id="regMobile" type="tel" placeholder="Mobile Number" required />
+        <div class="otp-row">
+          <input id="regOtp" type="text" placeholder="Enter OTP" required />
+          <button type="button" class="ghost" id="sendRegOtpBtn">Send OTP</button>
+        </div>
+        <button type="submit" class="primary">Register & Continue</button>
+      </form>
+
+      <form id="loginForm" class="register-form auth-panel" data-panel="login">
+        <input id="loginMobile" type="tel" placeholder="Mobile Number" required />
+        <div class="otp-row">
+          <input id="loginOtp" type="text" placeholder="Enter OTP" required />
+          <button type="button" class="ghost" id="sendLoginOtpBtn">Send OTP</button>
+        </div>
+        <button type="submit" class="primary">Login & Continue</button>
+      </form>
+
+      <p id="registerMsg" class="landing-status"></p>
+    </section>
+  </main>
+
+  <script type="module" src="./js/landing.js"></script>
+</body>
+</html>

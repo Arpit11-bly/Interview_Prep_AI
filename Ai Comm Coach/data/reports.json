@@ -1,0 +1,50 @@
+[
+  {
+    "id": "rep_1775720968797",
+    "userId": "usr_9a340080382e2c9f",
+    "timestamp": 1775720968797,
+    "mode": "Casual",
+    "customConversationType": "friendly conversation",
+    "interviewContext": {
+      "role": "",
+      "company": "",
+      "jd": ""
+    },
+    "summary": "The conversation is casual and friendly, but there are some areas for improvement in terms of grammar and fluency.",
+    "tips": "Use more varied sentence structures and vocabulary to improve fluency.",
+    "strengths": [
+      "The conversation is engaging and friendly.",
+      "The AI reply is responsive and shows interest in the conversation."
+    ],
+    "improvements": [
+      "Use more varied sentence structures to improve fluency.",
+      "Avoid filler words (e.g. 'just') to sound more natural."
+    ],
+    "scores": {
+      "grammar": 8,
+      "fluency": 7,
+      "confidence": 8
+    },
+    "performance": {
+      "relevance": 70,
+      "structure": 83,
+      "vocabulary": 52,
+      "consistency": 48
+    },
+    "conversation": [
+      {
+        "aiQuestion": "So, how's your week going so far?",
+        "user": "my week is going petty much good what about you",
+        "betterAnswer": "How was your weekend?",
+        "aiReply": "It's great to hear that your week is going well! I'm doing alright, just enjoying the conversation with you."
+      },
+      {
+        "aiQuestion": "It's great to hear that your week is going well! I'm doing alright, just enjoying the conversation with you.",
+        "user": "I am also enjoying the conversation with you",
+        "betterAnswer": "What's been the highlight of your day so far?",
+        "aiReply": "That's awesome, I'm glad we're having a great chat too!"
+      }
+    ],
+    "createdAt": 1775720968807
+  }
+]
