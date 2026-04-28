@@ -8,6 +8,8 @@ import InterviewPrep from "./pages/InterviewPrep/InterviewPrep";
 import InterviewCoach from "./pages/Coach/InterviewCoach";
 import ProfilePage from "./pages/Profile/ProfilePage";
 import UserProvider from './context/userContext.jsx';
+import AdminLogin from './pages/Admin/AdminLogin';
+import AdminDashboard from './pages/Admin/AdminDashboard';
 
  const App = () => {
   return (
@@ -18,7 +20,8 @@ import UserProvider from './context/userContext.jsx';
           {/* Default Route */}
           <Route path="/" element={<LandingPage />} />
 
-          
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/coach" element={<InterviewCoach />} />
           <Route path="/profile" element={<ProfilePage />} />

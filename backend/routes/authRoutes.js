@@ -4,6 +4,7 @@ const {
   sendRegisterOtp,
   verifyRegisterOtp,
   loginUser,
+  loginAdmin,
   sendForgotPasswordOtp,
   resetPasswordWithOtp,
   getUserProfile,
@@ -19,6 +20,7 @@ router.get("/check-email", checkEmailAvailability);
 router.post("/register/send-otp", sendRegisterOtp);
 router.post("/register/verify-otp", verifyRegisterOtp);
 router.post("/login" , loginUser);  //LoginUSer
+router.post("/admin/login", loginAdmin);
 router.post("/forgot-password/send-otp", sendForgotPasswordOtp);
 router.post("/forgot-password/reset", resetPasswordWithOtp);
 router.get("/profile", protect, getUserProfile); //get user profile

@@ -16,6 +16,9 @@ const OTP_EXPIRY_MINUTES = 10;
 const generateToken = (userId) =>
   jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
+const generateAdminToken = () =>
+  jwt.sign({ role: "admin", loginId: process.env.ADMIN_LOGIN_ID || "admin" }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
 const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
 
 const hashValue = (value) =>
@@ -26,6 +29,19 @@ const sanitizeUser = (user) => ({
   name: user.name,
   email: user.email,
   profileImageUrl: user.profileImageUrl,
+  role: "user",
+  assignedPreparationRole: user.assignedPreparationRole || "",
+  adminNotes: user.adminNotes || "",
+  assignedByAdminAt: user.assignedByAdminAt,
+  isActive: user.isActive !== false,
+});
+
+const sanitizeAdmin = () => ({
+  _id: "admin",
+  name: process.env.ADMIN_NAME || "Platform Admin",
+  email: process.env.ADMIN_LOGIN_ID || "admin",
+  profileImageUrl: null,
+  role: "admin",
 });
 
 const isInvalidRecipientError = (error) => {
@@ -43,6 +59,14 @@ const isInvalidRecipientError = (error) => {
 const validatePassword = (password) => {
   if (!password) return "Password is required.";
   if (String(password).length < 8) return "Password must be at least 8 characters.";
+  return "";
+};
+
+const validateAdminConfig = () => {
+  if (!process.env.ADMIN_LOGIN_ID || !process.env.ADMIN_PASSWORD) {
+    return "Admin credentials are not configured on the server.";
+  }
+
   return "";
 };
 
@@ -259,6 +283,10 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password." });
     }
 
+    if (user.isActive === false) {
+      return res.status(403).json({ message: "Your account has been deactivated by admin." });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid email or password." });
@@ -267,6 +295,33 @@ const loginUser = async (req, res) => {
     return res.status(200).json({
       ...sanitizeUser(user),
       token: generateToken(user._id),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+const loginAdmin = async (req, res) => {
+  try {
+    const loginId = String(req.body.loginId || "").trim();
+    const password = String(req.body.password || "");
+
+    const configError = validateAdminConfig();
+    if (configError) {
+      return res.status(503).json({ message: configError });
+    }
+
+    if (!loginId || !password) {
+      return res.status(400).json({ message: "Admin ID and password are required." });
+    }
+
+    if (loginId !== process.env.ADMIN_LOGIN_ID || password !== process.env.ADMIN_PASSWORD) {
+      return res.status(400).json({ message: "Invalid admin ID or password." });
+    }
+
+    return res.status(200).json({
+      ...sanitizeAdmin(),
+      token: generateAdminToken(),
     });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
@@ -366,11 +421,22 @@ const resetPasswordWithOtp = async (req, res) => {
 
 const getUserProfile = async (req, res) => {
   try {
+    if (req.user?.role === "admin") {
+      return res.status(200).json(sanitizeAdmin());
+    }
+
     const user = await User.findById(req.user.id).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    return res.status(200).json(user);
+    return res.status(200).json({
+      ...user.toObject(),
+      role: "user",
+      assignedPreparationRole: user.assignedPreparationRole || "",
+      adminNotes: user.adminNotes || "",
+      assignedByAdminAt: user.assignedByAdminAt,
+      isActive: user.isActive !== false,
+    });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -381,6 +447,7 @@ module.exports = {
   sendRegisterOtp,
   verifyRegisterOtp,
   loginUser,
+  loginAdmin,
   sendForgotPasswordOtp,
   resetPasswordWithOtp,
   getUserProfile,

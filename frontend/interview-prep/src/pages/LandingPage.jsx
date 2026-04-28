@@ -21,6 +21,8 @@ const LandingPage = () => {
     const handleCTA = () => {
         if(!user) {
             setOpenAuthModal(true);
+        }else if (user.role === "admin") {
+            navigate("/admin");
         }else{
             navigate("/dashboard");
          }
@@ -39,12 +41,20 @@ const LandingPage = () => {
                     {user ? (
                         <ProfileInfoCard />
                     ) :(
-                    <button 
-                        className='bg-linear-to-r from-[#FF9324] to-[#e99a4b] text-sm font-semibold text-white px-7 py-2.5 rounded-full hover:bg-black hover:text-white border border-white transition-colors cursor-pointer' 
-                        onClick={() => setOpenAuthModal(true)}
-                    >
-                        Login / Sign Up
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            className='border border-amber-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 rounded-full transition-colors hover:border-amber-300 hover:text-black cursor-pointer'
+                            onClick={() => navigate("/admin-login")}
+                        >
+                            Admin Login
+                        </button>
+                        <button 
+                            className='bg-linear-to-r from-[#FF9324] to-[#e99a4b] text-sm font-semibold text-white px-7 py-2.5 rounded-full hover:bg-black hover:text-white border border-white transition-colors cursor-pointer' 
+                            onClick={() => setOpenAuthModal(true)}
+                        >
+                            Login / Sign Up
+                        </button>
+                    </div>
                     )}
                 </header>
                 {/* Hero Content*/}

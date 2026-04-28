@@ -6,6 +6,7 @@ export const API_PATHS = {
     REGISTER_SEND_OTP: "/api/auth/register/send-otp",
     REGISTER_VERIFY_OTP: "/api/auth/register/verify-otp",
     LOGIN: "/api/auth/login", // Authenticate user & return JWT token
+    ADMIN_LOGIN: "/api/auth/admin/login",
     FORGOT_PASSWORD_SEND_OTP: "/api/auth/forgot-password/send-otp",
     FORGOT_PASSWORD_RESET: "/api/auth/forgot-password/reset",
     GET_PROFILE: "/api/auth/profile", // Get logged-in user details
@@ -39,5 +40,12 @@ export const API_PATHS = {
     ANSWER_TIPS: "/api/coach/answer-tips",
     REPORT: "/api/coach/report",
     REPORTS: "/api/coach/reports",
+  },
+
+  ADMIN: {
+    OVERVIEW: "/api/admin/overview",
+    USERS: "/api/admin/users",
+    USER_DETAIL: (id) => `/api/admin/users/${id}`,
+    USER_UPDATE: (id) => `/api/admin/users/${id}`,
   },
 };
