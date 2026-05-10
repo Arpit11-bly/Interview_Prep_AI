@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Session = require("../models/Session");
+const Question = require("../models/Question");
 const CoachReport = require("../models/CoachReport");
 
 const average = (values) => {
@@ -105,7 +106,7 @@ const getAllUsersForAdmin = async (_req, res) => {
     const [users, sessions, reports] = await Promise.all([
       User.find().sort({ createdAt: -1 }),
       Session.find().select("user role updatedAt createdAt"),
-      CoachReport.find().select("user interviewContext summary improvements scores createdAt"),
+      CoachReport.find().select("user interviewContext summary improvements scores isAdminAssigned assignedPreparationRole adminFeedback createdAt"),
     ]);
 
     const sessionsByUser = new Map();
@@ -203,9 +204,74 @@ const updateAdminUser = async (req, res) => {
   }
 };
 
+const updateReportFeedback = async (req, res) => {
+  try {
+    const report = await CoachReport.findById(req.params.reportId);
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+
+    report.adminFeedback = String(req.body.adminFeedback || "").trim();
+    await report.save();
+
+    res.status(200).json({
+      message: "Report feedback saved successfully",
+      report: {
+        _id: report._id,
+        adminFeedback: report.adminFeedback,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to save report feedback", error: error.message });
+  }
+};
+
+const deleteAdminSession = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.sessionId);
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    await Question.deleteMany({ session: session._id });
+    await session.deleteOne();
+
+    res.status(200).json({ message: "Session deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete session", error: error.message });
+  }
+};
+
+const deleteAdminUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const sessions = await Session.find({ user: user._id }).select("_id");
+    const sessionIds = sessions.map((session) => session._id);
+
+    await Promise.all([
+      Question.deleteMany({ session: { $in: sessionIds } }),
+      Session.deleteMany({ user: user._id }),
+      CoachReport.deleteMany({ user: user._id }),
+    ]);
+
+    await user.deleteOne();
+
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete user", error: error.message });
+  }
+};
+
 module.exports = {
   getAdminOverview,
   getAllUsersForAdmin,
   getAdminUserDetail,
   updateAdminUser,
+  updateReportFeedback,
+  deleteAdminSession,
+  deleteAdminUser,
 };

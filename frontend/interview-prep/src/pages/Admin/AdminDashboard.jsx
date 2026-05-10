@@ -23,6 +23,14 @@ const formatDate = (value) => {
   });
 };
 
+const getReportOverallScore = (scores = {}) => {
+  const values = [scores.grammar, scores.fluency, scores.confidence, scores.technicalKnowledge]
+    .map((value) => Number(value || 0))
+    .filter((value) => Number.isFinite(value));
+  if (!values.length) return 0;
+  return Math.round((values.reduce((sum, value) => sum + value, 0) / values.length) * 10) / 10;
+};
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const { user, loading } = useContext(UserContext);
@@ -37,6 +45,10 @@ const AdminDashboard = () => {
     isActive: true,
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [reportFeedbackDrafts, setReportFeedbackDrafts] = useState({});
+  const [savingReportId, setSavingReportId] = useState("");
+  const [deletingUserId, setDeletingUserId] = useState("");
+  const [deletingSessionId, setDeletingSessionId] = useState("");
   const [loadError, setLoadError] = useState("");
   const selectedUserExists = users.some((item) => item._id === selectedUserId);
 
@@ -62,15 +74,25 @@ const AdminDashboard = () => {
       adminNotes: response.data.user?.adminNotes || "",
       isActive: response.data.user?.isActive !== false,
     });
+    setReportFeedbackDrafts(
+      (response.data.reports || []).reduce((drafts, report) => ({
+        ...drafts,
+        [report._id]: report.adminFeedback || "",
+      }), {})
+    );
   };
 
   useEffect(() => {
+    console.log("AdminDashboard - loading:", loading, "user:", user); // Debug log
+    
     if (!loading && !user) {
+      console.log("No user, redirecting to home"); // Debug log
       navigate("/");
       return;
     }
 
     if (!loading && user && user.role !== "admin") {
+      console.log("User role is not admin, redirecting to dashboard. Role:", user.role); // Debug log
       navigate("/dashboard");
     }
   }, [loading, navigate, user]);
@@ -82,7 +104,7 @@ const AdminDashboard = () => {
       .then(() => setLoadError(""))
       .catch((error) => {
         console.log("Error fetching admin dashboard data:", error);
-        setLoadError(error.response?.data?.message || "Admin dashboard data load nahi ho pa raha. Backend aur MongoDB connection check karo.");
+        setLoadError(error.response?.data?.message || "Admin dashboard data could not be loaded. Check the backend and MongoDB connection.");
       });
   }, [user]);
 
@@ -90,7 +112,7 @@ const AdminDashboard = () => {
     if (!selectedUserId || user?.role !== "admin") return;
     fetchSelectedUser(selectedUserId).catch((error) => {
       console.log("Error fetching admin user detail:", error);
-      setLoadError(error.response?.data?.message || "Selected user detail load nahi ho pa rahi.");
+      setLoadError(error.response?.data?.message || "Selected user details could not be loaded.");
     });
   }, [selectedUserId, user]);
 
@@ -120,6 +142,59 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleReportFeedbackSave = async (reportId) => {
+    if (!reportId) return;
+
+    setSavingReportId(reportId);
+    try {
+      await axiosInstance.patch(API_PATHS.ADMIN.REPORT_FEEDBACK(reportId), {
+        adminFeedback: reportFeedbackDrafts[reportId] || "",
+      });
+      toast.success("Report feedback saved");
+      await fetchSelectedUser(selectedUserId);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Could not save report feedback.");
+    } finally {
+      setSavingReportId("");
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUserId || !selectedUserDetail?.user) return;
+    const confirmed = window.confirm(`Delete ${selectedUserDetail.user.name}? This will also delete their sessions, questions, and mock reports.`);
+    if (!confirmed) return;
+
+    setDeletingUserId(selectedUserId);
+    try {
+      await axiosInstance.delete(API_PATHS.ADMIN.USER_DELETE(selectedUserId));
+      toast.success("User deleted");
+      setSelectedUserDetail(null);
+      setSelectedUserId("");
+      await Promise.all([fetchOverview(), fetchUsers()]);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Could not delete user.");
+    } finally {
+      setDeletingUserId("");
+    }
+  };
+
+  const handleDeleteSession = async (sessionId) => {
+    if (!sessionId) return;
+    const confirmed = window.confirm("Delete this prep session and all its questions?");
+    if (!confirmed) return;
+
+    setDeletingSessionId(sessionId);
+    try {
+      await axiosInstance.delete(API_PATHS.ADMIN.SESSION_DELETE(sessionId));
+      toast.success("Session deleted");
+      await Promise.all([fetchOverview(), fetchUsers(), fetchSelectedUser(selectedUserId)]);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Could not delete session.");
+    } finally {
+      setDeletingSessionId("");
+    }
+  };
+
   const filteredUsers = users.filter((item) => {
     const query = filters.trim().toLowerCase();
     if (!query) return true;
@@ -145,7 +220,7 @@ const AdminDashboard = () => {
               <div className="max-w-3xl">
                 <h1 className="text-3xl font-semibold text-slate-900">Single admin dashboard for every learner.</h1>
                 <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Yahan se aap dekh sakte ho kaun kis role ke liye prepare kar raha hai, uske mock interviews ki overall progress kya hai, aur usse agla target role kya assign karna chahiye.
+                  See which role each user is preparing for, their overall mock interview progress, and the next target role to assign.
                 </p>
               </div>
               <div className="rounded-2xl border border-orange-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
@@ -274,6 +349,16 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      type="button"
+                      className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+                      onClick={handleDeleteUser}
+                      disabled={deletingUserId === selectedUserDetail.user._id}
+                    >
+                      {deletingUserId === selectedUserDetail.user._id ? "Deleting User..." : "Delete User"}
+                    </button>
+                  </div>
 
                   <div className="mt-6 grid gap-4 lg:grid-cols-2">
                     <div className="rounded-[24px] border border-orange-100 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_75%)] p-5">
@@ -294,7 +379,7 @@ const AdminDashboard = () => {
                         <label className="text-sm font-medium text-slate-700">Admin Notes</label>
                         <textarea
                           className="mt-2 min-h-28 w-full rounded-2xl border border-orange-200 bg-white px-4 py-3 text-sm outline-none focus:border-orange-300"
-                          placeholder="Example: confidence low hai, technical examples practice karani hai, STAR structure pe kaam karna hai."
+                          placeholder="Example: Needs confidence practice, stronger technical examples, and STAR structure work."
                           value={formState.adminNotes}
                           onChange={(e) => setFormState((current) => ({ ...current, adminNotes: e.target.value }))}
                         />
@@ -306,7 +391,7 @@ const AdminDashboard = () => {
                           checked={formState.isActive}
                           onChange={(e) => setFormState((current) => ({ ...current, isActive: e.target.checked }))}
                         />
-                        User account active rahe
+                        Keep user account active
                       </label>
 
                       <button type="button" className="btn-small mt-5" onClick={handleSave} disabled={isSaving}>
@@ -353,7 +438,7 @@ const AdminDashboard = () => {
                       <div className="mt-5 rounded-2xl bg-white p-4">
                         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-500">Latest mock summary</p>
                         <p className="mt-3 text-sm leading-7 text-slate-600">
-                          {selectedUserDetail.reportSummary.latestReport?.summary || "User ne abhi tak mock report generate nahi kiya hai."}
+                          {selectedUserDetail.reportSummary.latestReport?.summary || "No mock report has been generated yet."}
                         </p>
                       </div>
                     </div>
@@ -371,7 +456,17 @@ const AdminDashboard = () => {
                                   <p className="font-semibold text-slate-900">{session.role}</p>
                                   <p className="text-sm text-slate-500">{session.experience} experience</p>
                                 </div>
-                                <span className="text-xs text-slate-500">{formatDate(session.updatedAt)}</span>
+                                <div className="flex flex-col items-end gap-2">
+                                  <span className="text-xs text-slate-500">{formatDate(session.updatedAt)}</span>
+                                  <button
+                                    type="button"
+                                    className="rounded-full border border-rose-200 bg-white px-3 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60"
+                                    onClick={() => handleDeleteSession(session._id)}
+                                    disabled={deletingSessionId === session._id}
+                                  >
+                                    {deletingSessionId === session._id ? "Deleting..." : "Delete"}
+                                  </button>
+                                </div>
                               </div>
                               <p className="mt-2 text-sm text-slate-600">{session.topicsToFocus}</p>
                               <p className="mt-2 text-xs text-slate-500">Questions: {session.questions?.length || 0}</p>
@@ -391,18 +486,62 @@ const AdminDashboard = () => {
                             <div key={report._id} className="rounded-2xl bg-slate-50 p-4">
                               <div className="flex items-start justify-between gap-3">
                                 <div>
-                                  <p className="font-semibold text-slate-900">{report.interviewContext?.role || report.mode}</p>
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <p className="font-semibold text-slate-900">{report.interviewContext?.role || report.mode}</p>
+                                    {report.isAdminAssigned ? (
+                                      <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">Assigned Role</span>
+                                    ) : null}
+                                  </div>
                                   <p className="text-sm text-slate-500">{report.interviewContext?.company || "Mock interview"}</p>
                                 </div>
                                 <span className="text-xs text-slate-500">{formatDate(report.createdAt)}</span>
                               </div>
                               <p className="mt-3 text-sm text-slate-600">{report.summary || "No summary available."}</p>
+                              <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-5">
+                                <div className="rounded-2xl bg-white px-3 py-2 text-center">
+                                  <p className="font-semibold text-slate-900">{getReportOverallScore(report.scores)}</p>
+                                  <p className="text-slate-500">Overall</p>
+                                </div>
+                                <div className="rounded-2xl bg-white px-3 py-2 text-center">
+                                  <p className="font-semibold text-slate-900">{report.scores?.grammar || 0}</p>
+                                  <p className="text-slate-500">Grammar</p>
+                                </div>
+                                <div className="rounded-2xl bg-white px-3 py-2 text-center">
+                                  <p className="font-semibold text-slate-900">{report.scores?.fluency || 0}</p>
+                                  <p className="text-slate-500">Fluency</p>
+                                </div>
+                                <div className="rounded-2xl bg-white px-3 py-2 text-center">
+                                  <p className="font-semibold text-slate-900">{report.scores?.confidence || 0}</p>
+                                  <p className="text-slate-500">Confidence</p>
+                                </div>
+                                <div className="rounded-2xl bg-white px-3 py-2 text-center">
+                                  <p className="font-semibold text-slate-900">{report.scores?.technicalKnowledge || 0}</p>
+                                  <p className="text-slate-500">Technical</p>
+                                </div>
+                              </div>
                               <div className="mt-3 flex flex-wrap gap-2">
                                 {(report.improvements || []).map((item) => (
                                   <span key={item} className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600">
                                     {item}
                                   </span>
                                 ))}
+                              </div>
+                              <div className="mt-4 rounded-2xl bg-white p-3">
+                                <label className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-500">Admin Feedback</label>
+                                <textarea
+                                  className="mt-2 min-h-20 w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-700 outline-none focus:border-orange-300"
+                                  placeholder="Write feedback for this mock score."
+                                  value={reportFeedbackDrafts[report._id] || ""}
+                                  onChange={(e) => setReportFeedbackDrafts((current) => ({ ...current, [report._id]: e.target.value }))}
+                                />
+                                <button
+                                  type="button"
+                                  className="mt-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white disabled:bg-slate-300"
+                                  onClick={() => handleReportFeedbackSave(report._id)}
+                                  disabled={savingReportId === report._id}
+                                >
+                                  {savingReportId === report._id ? "Saving..." : "Save Feedback"}
+                                </button>
                               </div>
                             </div>
                           ))

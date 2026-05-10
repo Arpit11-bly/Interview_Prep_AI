@@ -47,5 +47,8 @@ export const API_PATHS = {
     USERS: "/api/admin/users",
     USER_DETAIL: (id) => `/api/admin/users/${id}`,
     USER_UPDATE: (id) => `/api/admin/users/${id}`,
+    USER_DELETE: (id) => `/api/admin/users/${id}`,
+    SESSION_DELETE: (id) => `/api/admin/sessions/${id}`,
+    REPORT_FEEDBACK: (id) => `/api/admin/reports/${id}/feedback`,
   },
 };

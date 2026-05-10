@@ -5,6 +5,8 @@ const coachReportSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     mode: { type: String, required: true },
     customConversationType: { type: String, default: "" },
+    isAdminAssigned: { type: Boolean, default: false },
+    assignedPreparationRole: { type: String, default: "" },
     interviewContext: {
       role: { type: String, default: "" },
       company: { type: String, default: "" },
@@ -12,6 +14,7 @@ const coachReportSchema = new mongoose.Schema(
     },
     summary: { type: String, default: "" },
     tips: { type: String, default: "" },
+    adminFeedback: { type: String, default: "" },
     strengths: [{ type: String }],
     improvements: [{ type: String }],
     scores: {

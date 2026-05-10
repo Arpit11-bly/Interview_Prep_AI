@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import { LuPlus } from 'react-icons/lu';
 import { CARD_BG } from "../../utils/data";
 import toast from "react-hot-toast";
@@ -12,10 +12,12 @@ import Modal from '../../components/Modal';
 import CreateSessionForm from './CreateSessionForm';
 import DeleteAlertContent from '../../components/DeleteAlertContent';
 import { LuMessagesSquare } from 'react-icons/lu';
+import { UserContext } from '../../context/UserContext';
 
 const Dashboard = () => {
 
   const navigate = useNavigate();
+  const { user, updateUser } = useContext(UserContext);
 
   const[openCreateModal, setOpenCreateModal] = useState(false);
   const[sessions, setSessions]=useState([]);
@@ -34,6 +36,7 @@ const Dashboard = () => {
 
   }
   };
+
   const deleteSession = async (sessionData) =>{
    try{
     await axiosInstance.delete(API_PATHS.SESSION.DELETE(sessionData?._id));
@@ -53,10 +56,43 @@ const Dashboard = () => {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAllSessions();
-  }, []);
+    axiosInstance
+      .get(API_PATHS.AUTH.GET_PROFILE)
+      .then((response) => updateUser(response.data))
+      .catch((error) => console.log("Error refreshing user profile:", error));
+  }, [updateUser]);
   return (
     <DashboardLayout>
       <div className=' container mx-auto pt-4 pb-4'>
+        {/* Admin Assignment Section */}
+        {user?.assignedPreparationRole && (
+          <div className='mb-6 rounded-3xl border-2 border-orange-400 bg-[linear-gradient(135deg,#fff4dc_0%,#fff8f0_100%)] p-6 shadow-md'>
+            <div className='flex flex-col gap-4 md:flex-row md:items-start md:justify-between'>
+              <div className='max-w-2xl'>
+                <p className='text-xs font-semibold uppercase tracking-[0.18em] text-orange-600'>Admin Assigned Role</p>
+                <h2 className='mt-3 text-2xl font-bold text-slate-900'>{user.assignedPreparationRole}</h2>
+                {user?.adminNotes && (
+                  <p className='mt-3 text-sm text-slate-700 leading-relaxed border-l-4 border-orange-400 pl-4'>
+                    <span className='font-semibold text-orange-700'>Admin Notes:</span> {user.adminNotes}
+                  </p>
+                )}
+                {user?.assignedByAdminAt && (
+                  <p className='mt-2 text-xs text-slate-500'>
+                    Assigned on {moment(user.assignedByAdminAt).format('Do MMM YYYY [at] h:mm A')}
+                  </p>
+                )}
+                <button
+                  type='button'
+                  className='btn-small mt-4 w-fit'
+                  onClick={() => navigate('/coach?assigned=1')}
+                >
+                  Start Assigned Mock Interview
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className='mb-6 rounded-3xl border border-orange-100 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_70%)] p-6 shadow-sm'>
           <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
             <div className='max-w-2xl'>

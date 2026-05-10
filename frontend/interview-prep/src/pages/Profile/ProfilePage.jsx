@@ -1,23 +1,30 @@
 import React, { useContext, useEffect, useState } from "react";
 import { LuCalendarDays, LuChartColumnIncreasing, LuUserRound } from "react-icons/lu";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { UserContext } from "../../context/UserContext";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPaths";
 import { formatCoachDate } from "../Coach/coachHelpers";
+import moment from "moment";
 
 const ProfilePage = () => {
-  const { user } = useContext(UserContext);
+  const { user, updateUser } = useContext(UserContext);
+  const navigate = useNavigate();
   const [reports, setReports] = useState([]);
 
   useEffect(() => {
     const fetchReports = async () => {
-      const response = await axiosInstance.get(API_PATHS.COACH.REPORTS);
-      setReports(response.data || []);
+      const [profileResponse, reportsResponse] = await Promise.all([
+        axiosInstance.get(API_PATHS.AUTH.GET_PROFILE),
+        axiosInstance.get(API_PATHS.COACH.REPORTS),
+      ]);
+      updateUser(profileResponse.data);
+      setReports(reportsResponse.data || []);
     };
 
     fetchReports().catch((error) => console.log("Error fetching profile reports:", error));
-  }, []);
+  }, [updateUser]);
 
   return (
     <DashboardLayout>
@@ -50,6 +57,34 @@ const ProfilePage = () => {
             </div>
           </div>
 
+          {/* Admin Assignment Info */}
+          {user?.assignedPreparationRole && (
+            <div className="mt-8 rounded-[24px] border-2 border-orange-300 bg-[linear-gradient(135deg,#fff4dc_0%,#fff8f0_100%)] p-6 shadow-md">
+              <div className="mb-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-600">Admin Assigned Role</p>
+                <h3 className="mt-2 text-xl font-bold text-slate-900">{user.assignedPreparationRole}</h3>
+              </div>
+              {user?.adminNotes && (
+                <div className="mt-4 rounded-lg border-l-4 border-orange-400 bg-white p-4">
+                  <p className="text-xs font-semibold text-orange-700">ADMIN NOTES</p>
+                  <p className="mt-2 text-sm text-slate-700 leading-relaxed">{user.adminNotes}</p>
+                </div>
+              )}
+              {user?.assignedByAdminAt && (
+                <p className="mt-3 text-xs text-slate-500">
+                  Assigned on {moment(user.assignedByAdminAt).format('Do MMM YYYY [at] h:mm A')}
+                </p>
+              )}
+              <button
+                type="button"
+                className="btn-small mt-4 w-fit"
+                onClick={() => navigate("/coach?assigned=1")}
+              >
+                Start Assigned Mock Interview
+              </button>
+            </div>
+          )}
+
           <div className="mt-8">
             <div className="flex items-center gap-3">
               <LuChartColumnIncreasing className="text-xl text-orange-500" />
@@ -62,7 +97,12 @@ const ProfilePage = () => {
                   <div key={report._id} className="rounded-2xl border border-slate-200 p-5">
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                       <div>
-                        <p className="text-lg font-semibold text-slate-900">{report.interviewContext?.role || "Interview Session"}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-lg font-semibold text-slate-900">{report.interviewContext?.role || "Interview Session"}</p>
+                          {report.isAdminAssigned ? (
+                            <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">Assigned Role</span>
+                          ) : null}
+                        </div>
                         <p className="text-sm text-slate-500">{report.interviewContext?.company || "Company not specified"}</p>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-slate-500">
@@ -96,6 +136,13 @@ const ProfilePage = () => {
                     </div>
 
                     <p className="mt-4 text-sm leading-6 text-slate-700">{report.tips || "No extra tips saved for this report."}</p>
+
+                    {report.adminFeedback ? (
+                      <div className="mt-4 rounded-2xl border border-orange-100 bg-orange-50 px-4 py-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-600">Admin Feedback</p>
+                        <p className="mt-2 text-sm leading-6 text-slate-700">{report.adminFeedback}</p>
+                      </div>
+                    ) : null}
                   </div>
                 ))
               ) : (

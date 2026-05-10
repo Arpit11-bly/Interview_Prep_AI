@@ -24,7 +24,7 @@ const AdminLogin = () => {
     e.preventDefault();
 
     if (!loginId.trim() || !password) {
-      setError("Admin ID aur password dono required hain.");
+      setError("Admin ID and password are required.");
       return;
     }
 
@@ -55,11 +55,11 @@ const AdminLogin = () => {
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-200">Single Admin Access</p>
             <h1 className="mt-4 text-4xl font-semibold leading-tight">Track every learner from one admin workspace.</h1>
             <p className="mt-4 max-w-md text-sm leading-7 text-orange-50/90">
-              Yahan se aap dekh paoge kaun sa user kis role ke liye prepare kar raha hai, usne kitne mock interviews diye hain, aur improvement kaha chahiye.
+              See which role each user is preparing for, how many mock interviews they have completed, and where they need improvement.
             </p>
             <div className="mt-8 space-y-4 text-sm text-orange-50/90">
-              <div className="rounded-2xl border border-white/10 bg-white/8 p-4">Users ki prep sessions aur AI mock interview reports ek jagah milenge.</div>
-              <div className="rounded-2xl border border-white/10 bg-white/8 p-4">Admin directly assigned preparation role aur coaching notes update kar sakta hai.</div>
+              <div className="rounded-2xl border border-white/10 bg-white/8 p-4">User prep sessions and AI mock interview reports are available in one place.</div>
+              <div className="rounded-2xl border border-white/10 bg-white/8 p-4">Admins can update assigned preparation roles and coaching notes directly.</div>
             </div>
           </div>
 
@@ -73,7 +73,7 @@ const AdminLogin = () => {
             </button>
 
             <h2 className="mt-6 text-2xl font-semibold text-slate-900">Admin Login</h2>
-            <p className="mt-2 text-sm text-slate-500">Only one admin ID aur password se login hoga.</p>
+            <p className="mt-2 text-sm text-slate-500">Login is limited to one admin ID and password.</p>
 
             <form className="mt-8" onSubmit={handleSubmit}>
               <Input

@@ -1,4 +1,5 @@
 const CoachReport = require("../models/CoachReport");
+const User = require("../models/User");
 const {
   generateOpening,
   generateTurn,
@@ -35,12 +36,22 @@ exports.getAnswerTips = async (req, res) => {
 
 exports.generateAndSaveReport = async (req, res) => {
   try {
+    const activeUser = await User.findById(req.user._id).select("assignedPreparationRole adminNotes assignedByAdminAt");
+    const assignedRole = String(activeUser?.assignedPreparationRole || "").trim();
+    const reportRole = String(req.body.interviewContext?.role || "").trim();
+    const isAssignedRoleMatch = Boolean(
+      assignedRole && reportRole && assignedRole.toLowerCase() === reportRole.toLowerCase()
+    );
+    const isAdminAssignedAttempt = Boolean(req.body.isAdminAssigned) || isAssignedRoleMatch;
+
     const reportData = await generateReport(req.body || {});
 
     const savedReport = await CoachReport.create({
       user: req.user._id,
       mode: req.body.mode || "Interview",
       customConversationType: req.body.customConversationType || "",
+      isAdminAssigned: isAdminAssignedAttempt,
+      assignedPreparationRole: String(req.body.assignedPreparationRole || assignedRole || "").trim(),
       interviewContext: req.body.interviewContext || {},
       summary: reportData.report?.summary || "",
       tips: reportData.tips || "",
@@ -56,9 +67,32 @@ exports.generateAndSaveReport = async (req, res) => {
       conversation: reportData.conversation || [],
     });
 
+    const updatedUser = isAdminAssignedAttempt
+      ? await User.findByIdAndUpdate(
+          req.user._id,
+          {
+            assignedPreparationRole: "",
+            adminNotes: "",
+            assignedByAdminAt: null,
+          },
+          { new: true }
+        ).select("-password")
+      : null;
+
     res.status(200).json({
       ...reportData,
       reportId: savedReport._id,
+      assignmentCompleted: isAdminAssignedAttempt,
+      user: updatedUser
+        ? {
+            ...updatedUser.toObject(),
+            role: "user",
+            assignedPreparationRole: "",
+            adminNotes: "",
+            assignedByAdminAt: null,
+            isActive: updatedUser.isActive !== false,
+          }
+        : undefined,
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to generate coach report", error: error.message });

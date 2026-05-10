@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
 const AuthOtp = require("../models/AuthOtp");
+const CoachReport = require("../models/CoachReport");
 const {
   normalizeEmail,
   isValidEmailFormat,
@@ -42,6 +43,10 @@ const sanitizeAdmin = () => ({
   email: process.env.ADMIN_LOGIN_ID || "admin",
   profileImageUrl: null,
   role: "admin",
+  assignedPreparationRole: "",
+  adminNotes: "",
+  assignedByAdminAt: null,
+  isActive: true,
 });
 
 const isInvalidRecipientError = (error) => {
@@ -304,7 +309,7 @@ const loginUser = async (req, res) => {
 const loginAdmin = async (req, res) => {
   try {
     const loginId = String(req.body.loginId || "").trim();
-    const password = String(req.body.password || "");
+    const password = String(req.body.password || "").trim();
 
     const configError = validateAdminConfig();
     if (configError) {
@@ -315,7 +320,10 @@ const loginAdmin = async (req, res) => {
       return res.status(400).json({ message: "Admin ID and password are required." });
     }
 
-    if (loginId !== process.env.ADMIN_LOGIN_ID || password !== process.env.ADMIN_PASSWORD) {
+    const adminLoginId = String(process.env.ADMIN_LOGIN_ID || "").trim();
+    const adminPassword = String(process.env.ADMIN_PASSWORD || "").trim();
+
+    if (loginId !== adminLoginId || password !== adminPassword) {
       return res.status(400).json({ message: "Invalid admin ID or password." });
     }
 
@@ -429,12 +437,20 @@ const getUserProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+    const completedAssignedReport = user.assignedPreparationRole
+      ? await CoachReport.findOne({
+          user: user._id,
+          isAdminAssigned: true,
+          assignedPreparationRole: user.assignedPreparationRole,
+        }).select("_id")
+      : null;
+
     return res.status(200).json({
       ...user.toObject(),
       role: "user",
-      assignedPreparationRole: user.assignedPreparationRole || "",
-      adminNotes: user.adminNotes || "",
-      assignedByAdminAt: user.assignedByAdminAt,
+      assignedPreparationRole: completedAssignedReport ? "" : user.assignedPreparationRole || "",
+      adminNotes: completedAssignedReport ? "" : user.adminNotes || "",
+      assignedByAdminAt: completedAssignedReport ? null : user.assignedByAdminAt,
       isActive: user.isActive !== false,
     });
   } catch (error) {

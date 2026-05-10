@@ -1,7 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useLocation } from "react-router-dom";
 import { LuBot, LuMic, LuPlay, LuSparkles, LuSquare, LuWandSparkles } from "react-icons/lu";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { UserContext } from "../../context/UserContext";
 import axiosInstance from "../../utils/axiosInstance";
 import { API_PATHS } from "../../utils/apiPaths";
 import { appendWithoutDup, chooseBestAlternative, normalizeText, refineTranscriptText } from "./coachHelpers";
@@ -11,9 +13,12 @@ const initialContext = { role: "", company: "", jd: "" };
 const initialReport = { grammar: 0, fluency: 0, confidence: 0, technicalKnowledge: 0, tips: "", report: null };
 
 const InterviewCoach = () => {
+  const { user, updateUser } = useContext(UserContext);
+  const location = useLocation();
   const recognitionRef = useRef(null);
   const lastFinalChunkRef = useRef("");
   const speechSupported = useMemo(() => Boolean(SpeechRecognition), []);
+  const isAssignedAttempt = useMemo(() => new URLSearchParams(location.search).get("assigned") === "1", [location.search]);
 
   const [interviewContext, setInterviewContext] = useState(initialContext);
   const [sessionActive, setSessionActive] = useState(false);
@@ -27,6 +32,17 @@ const InterviewCoach = () => {
   const [liveTranscript, setLiveTranscript] = useState("Waiting for input...");
   const [entries, setEntries] = useState([]);
   const [report, setReport] = useState(initialReport);
+
+  useEffect(() => {
+    if (!isAssignedAttempt || !user?.assignedPreparationRole) return;
+    setInterviewContext((current) => ({
+      ...current,
+      role: current.role || user.assignedPreparationRole,
+      company: current.company || "Admin assigned mock",
+      jd: current.jd || user.adminNotes || "",
+    }));
+    setQuestion("Your assigned role is ready. Click Start Session to begin the mock interview.");
+  }, [isAssignedAttempt, user]);
 
   useEffect(() => {
     if (!speechSupported) return undefined;
@@ -149,6 +165,8 @@ const InterviewCoach = () => {
       const response = await axiosInstance.post(API_PATHS.COACH.REPORT, {
         mode: "Interview",
         interviewContext,
+        isAdminAssigned: isAssignedAttempt,
+        assignedPreparationRole: isAssignedAttempt ? user?.assignedPreparationRole || interviewContext.role : "",
         entries: reportEntries,
       });
       setReport({
@@ -161,6 +179,14 @@ const InterviewCoach = () => {
       });
       setSource(response.data?.source === "ai" ? "AI report" : "Smart local report");
       setStatus("Report saved to profile");
+      if (response.data?.assignmentCompleted) {
+        if (response.data?.user) {
+          updateUser(response.data.user);
+        } else {
+          const profileResponse = await axiosInstance.get(API_PATHS.AUTH.GET_PROFILE);
+          updateUser(profileResponse.data);
+        }
+      }
       toast.success("Interview report saved to profile.");
     } finally {
       setIsGeneratingReport(false);
@@ -178,6 +204,9 @@ const InterviewCoach = () => {
                   <LuSparkles /> AI Comm Coach
                 </div>
                 <h1 className="text-3xl font-semibold text-slate-900">Interview-only mock coach</h1>
+                {isAssignedAttempt ? (
+                  <p className="mt-2 text-sm font-medium text-orange-700">Admin assigned mock interview</p>
+                ) : null}
               </div>
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="rounded-2xl bg-orange-50 px-4 py-3"><p className="text-xl font-bold text-slate-900">{entries.filter((item) => item.original).length}</p><p className="text-xs text-slate-600">Answers</p></div>
